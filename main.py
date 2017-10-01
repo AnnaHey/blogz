@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, render_template, session
+from flask import Flask, request, redirect, render_template, session, flash
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -48,9 +48,10 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and user.password == password:
             session['username'] = username
+            flash("logged in")
             return redirect('/')
         else:
-            flash("Username does not exist", "error")
+            flash("Username does not exist, please sign up or log in with correct username", "error")
     return render_template('login.html')
 
 
