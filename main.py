@@ -94,11 +94,11 @@ def signup():
     return render_template('signup.html')
 
 
-
 @app.route('/', methods=['POST', 'GET'])
 def index():
     users = User.query.all()
-    return render_template('index.html', title="Blogz", users=users)
+    return render_template('index.html', title="blog users!", users=users)
+
 
 @app.route('/blog')
 def blog_list():
@@ -116,7 +116,8 @@ def blog_list():
 
     else:
         blogs = Blog.query.all()
-        return render_template('blogs.html', title="Blogz", blogs=blogs)
+        return render_template('blogs.html', title="blog posts!", blogs=blogs)
+
 
 @app.route('/newpost', methods=['POST', 'GET'])
 def add_blog():
@@ -141,6 +142,7 @@ def add_blog():
 
     else: 
         return render_template('newblog.html', title="Blogs!")
+
 
 if __name__ == '__main__':
     app.run()
