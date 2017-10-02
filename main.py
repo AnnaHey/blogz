@@ -32,12 +32,12 @@ class User(db.Model):
         self.username = username
         self.password = password
 
+
 @app.before_request
 def require_login():
     allowed_routes = ['login', 'signup', 'index', 'blogs']
     if request.endpoint not in allowed_routes and 'username' not in session:
         return redirect ('/login')
-
 
 
 @app.route('/login', methods = ['POST', 'GET'])
@@ -52,6 +52,7 @@ def login():
             return redirect('/')
         else:
             flash("Username does not exist, please sign up or log in with correct username", "error")
+        
     return render_template('login.html')
 
 
@@ -67,47 +68,32 @@ def signup():
         username = request.form['username']
         password = request.form['password']
         verify = request.form['verify']
-        username_error =''
-        password_error = ''
-        verify_error = ''
-
         
         if len(username) < 3 or len(username) > 20:
-            username_error = "Not a valid username" 
-            username = ''
+            flash("Not a valid username", "error")
 
-        if password != verify:
-            password_error = "Not a match" 
-            password = ''
-        else:
-            password = password
-    
-        if verify != password:
-            verify_error = "Not a match, please re-enter password and verification"
-            password = ''
-            verify = ''
-        else:
-            password = password
-            verify = verify
+        elif len(password) < 3 or len(password) > 20:
+            flash("Not a valid password", "error")
 
-        existing_user = User.query.filter_by(username=username).first()
-        if not existing_user:
-            new_user = User(username, password)
-            db.session.add(new_user)
-            db.session.commit()
-            session['username'] = username
-            return redirect('/')
-
+        elif password != verify:
+            flash("Not a match", "error") 
+            
         else:
-            # will return message that user already exists
-            pass
+            existing_user = User.query.filter_by(username=username).first()
+        
+            if not existing_user:
+                new_user = User(username, password)
+                db.session.add(new_user)
+                db.session.commit()
+                session['username'] = username
+                return redirect('/newpost')
+
+            else:
+                flash("This user already exists", "error")
 
     return render_template('signup.html')
 
 
-
-
-# blogs = []
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
@@ -132,16 +118,29 @@ def blog_list():
         blogs = Blog.query.all()
         return render_template('blogs.html', title="Blogz", blogs=blogs)
 
-@app.route("/newblog", methods=['POST', 'GET'])
+@app.route('/newpost', methods=['POST', 'GET'])
 def add_blog():
     if request.method == 'POST':
         blog_title = request.form['blog_title']
-        blog_body = request.form['blog_body'] 
-        blogs.append(blog_title)
-        blogs.append(blog_body)
+        blog_body = request.form['blog_body']
+        owner = User.query.filter_by(username=session['username']).first()
+        
+        if len(blog_title) < 1:
+            flash("Please fill in title", "error")
+            return render_template('newblog.html', title="Blogs!")
+            
+        elif len(blog_body) < 1:
+            flash("Please type a blog", "error")
+            return render_template('newblog.html', title="Blogs!")
+        else:
+            new_blog = Blog(blog_title, blog_body, owner)
+            db.session.add(new_blog)
+            db.session.commit()
+            query_param_url = "/blog?id=" + str(new_blog.id)
+            return render_template ('singleblog.html', blog=new_blog)
 
-
-    return render_template('blogs.html', title="Blogs!", blogs=blogs)
+    else: 
+        return render_template('newblog.html', title="Blogs!")
 
 if __name__ == '__main__':
     app.run()
